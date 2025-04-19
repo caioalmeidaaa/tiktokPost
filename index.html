@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Callback de Autorização TikTok</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2rem; background: #f4f4f4; color: #333; }
+    .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h1 { font-size: 1.5rem; }
+    code { background: #eee; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Autenticação TikTok concluída</h1>
+    <p id="mensagem">Processando retorno de autorização...</p>
+  </div>
+
+  <script>
+    (function() {
+      const query = new URLSearchParams(window.location.search);
+      const code = query.get('code');
+      const state = query.get('state');
+      const error = query.get('error');
+      const msg = document.getElementById('mensagem');
+
+      if (error) {
+        msg.textContent = "Erro ao autorizar: " + query.get('error_description') || error;
+        return;
+      }
+
+      if (!code) {
+        msg.textContent = "Código de autorização não encontrado na URL.";
+        return;
+      }
+
+      // Exibir código de autorização
+      msg.innerHTML = `
+        <strong>Código:</strong> <code>${code}</code><br>
+        <strong>State:</strong> <code>${state}</code><br><br>
+        Enviando para o servidor...
+      `;
+
+      // Enviar para o seu backend (ex: webhook no n8n)
+      fetch('https://almeidacaio.app.n8n.cloud/webhook-test/tiktok-oauth-callback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, state })
+      })
+      .then(response => response.text())
+      .then(data => {
+        msg.innerHTML += `<br><br><strong>Resposta:</strong> ${data}`;
+      })
+      .catch(err => {
+        msg.innerHTML += `<br><br><strong>Erro ao enviar:</strong> ${err}`;
+      });
+    })();
+  </script>
+</body>
+</html>
